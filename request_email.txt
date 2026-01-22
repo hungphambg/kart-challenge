@@ -1,0 +1,28 @@
+Hello Hung Pham ,
+
+It was nice to e-meet you today. 
+
+Refer to the link below for all the guidelines & resources that will help you get started and understanding the expectations from this assignment. Kindly acknowledge this email for us to be on the same page. 
+
+Timeline for submission - 29th January or before 
+
+Expectation - We are excited to see how you design your solutions that stand you apart as a strong developer. 
+
+Assignment | Guidelines & Resources :
+https://github.com/oolio-group/kart-challenge/blob/advanced-challenge/backend-challenge/README.md
+
+Task requirement : Build an API server implementing our OpenAPI spec for food ordering API in Go.  
+
+Key Guidelines: 
+We do not only look at the final solution. We want to see how you think if the solution can grow for real use case. For example: can this solution handle big scale?
+Coupon validation is much important.
+Think for extensibility.
+Detailed README & Adding docker setup - that helps to reviwer understand your approach
+
+Feel free to explore Reactjs for front end 
+
+Indegineous approach to the solution over AI
+
+Once completed - revert back to us with your Github Link (public)
+
+Please note - The assignment will be an extension to our Technical round where your approach will be discussed in detail. 
