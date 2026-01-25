@@ -1,0 +1,121 @@
+# Sprint Status Template
+# This is an EXAMPLE showing the expected format
+# The actual file will be generated with all epics/stories from your epic files
+
+# generated: Thursday, January 22, 2026
+# project: kart-challenge
+# project_key:
+# tracking_system: file-system
+# story_location: D:\00.WorkSpace\kart-challenge\_bmad-output\implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created, ready for development
+#   - in-progress: Developer actively working on implementation
+#   - review: Implementation complete, ready for review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Mark epic as 'in-progress' when starting work on its first story
+# - SM typically creates next story ONLY after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then Dev runs code-review (fresh context, ideally different LLM)
+
+generated: Thursday, January 22, 2026
+project: kart-challenge
+project_key:
+tracking_system: file-system
+story_location: D:\00.WorkSpace\kart-challenge\_bmad-output\implementation-artifacts
+
+development_status:
+  epic-1: backlog
+  1-1-set-up-initial-go-project-structure: ready-for-dev
+  1-2-implement-a-configuration-module: ready-for-dev
+  1-3-establish-database-connection-and-health-check: ready-for-dev
+  1-4-set-up-http-server-and-routing: ready-for-dev
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-define-the-product-data-model: ready-for-dev
+  2-2-create-the-products-database-schema: ready-for-dev
+  2-3-implement-get-products-endpoint: ready-for-dev
+  2-4-implement-get-products-id-endpoint: ready-for-dev
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-define-cart-and-cart-item-data-models: ready-for-dev
+  3-2-create-carts-and-cart-items-database-schemas: ready-for-dev
+  3-3-implement-get-cart-endpoint: ready-for-dev
+  3-4-implement-post-cart-items-endpoint: ready-for-dev
+  3-5-implement-put-cart-items-product-id-endpoint: ready-for-dev
+  3-6-implement-delete-cart-items-product-id-endpoint: ready-for-dev
+  3-7-implement-delete-cart-endpoint: ready-for-dev
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-define-order-and-order-item-data-models: ready-for-dev
+  4-2-create-orders-and-order-items-database-schemas: ready-for-dev
+  4-3-implement-post-orders-endpoint: ready-for-dev
+  4-4-implement-get-orders-endpoint: ready-for-dev
+  4-5-implement-get-orders-order-id-endpoint: ready-for-dev
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-define-coupon-data-model: ready-for-dev
+  5-2-create-coupons-database-schema: ready-for-dev
+  5-3-implement-post-coupons-validate-endpoint: ready-for-dev
+  5-4-implement-happyhours-coupon-logic: ready-for-dev
+  5-5-implement-buygetone-coupon-logic: ready-for-dev
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-create-dockerfile-for-go-api: ready-for-dev
+  6-2-create-docker-compose-for-local-development: ready-for-dev
+  6-3-update-readme-with-instructions: ready-for-dev
+  6-4-ensure-api-documentation: ready-for-dev
+  epic-6-retrospective: optional
+
+  epic-7: backlog
+  7-1-define-docker-compose-pipeline-yaml: ready-for-dev
+  7-2-configure-kafka-topics-on-startup: ready-for-dev
+  7-3-write-pipeline-readme: ready-for-dev
+  epic-7-retrospective: optional
+
+  epic-8: backlog
+  8-1-set-up-producer-go-module-new: ready-for-dev
+  8-2-implement-gz-file-reader: ready-for-dev
+  8-3-implement-stream-decompression-logic: ready-for-dev
+  8-4-implement-coupon-code-identification: ready-for-dev
+  8-5-implement-kafka-producer: ready-for-dev
+  8-6-create-producer-dockerfile: ready-for-dev
+  8-7-integrate-producer-into-docker-compose-pipeline-yaml: ready-for-dev
+  8-8-implement-producer-scheduler: ready-for-dev
+  epic-8-retrospective: optional
+
+  epic-9: backlog
+  9-1-set-up-consumer-go-module: ready-for-dev
+  9-2-implement-kafka-consumer-subscription: ready-for-dev
+  9-3-integrate-go-stream-processing-library: ready-for-dev
+  9-4-implement-consumer-state-management: ready-for-dev
+  9-5-implement-valid-coupon-code-identification: ready-for-dev
+  9-6-implement-redis-client-for-valid-codes: ready-for-dev
+  9-7-create-consumer-dockerfile: ready-for-dev
+  9-8-integrate-consumer-into-docker-compose-pipeline-yaml: ready-for-dev
+  epic-9-retrospective: optional
+
+  epic-10: backlog
+  10-1-implement-api-redis-client: ready-for-dev
+  10-2-modify-post-coupons-validate-endpoint: ready-for-dev
+  10-3-update-post-orders-endpoint-for-redis-validation: ready-for-dev
+  epic-10-retrospective: optional
