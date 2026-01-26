@@ -298,10 +298,10 @@ test.describe('Checkout Flow', () => {
     await expect(page.getByText('Card expired. Please use a different card.')).toBeVisible();
   });
 
-  test('coupon code applies discount correctly @p2', async ({ page }) => {
+  test('couponLib code applies discount correctly @p2', async ({ page }) => {
     // P2: Secondary feature (nice-to-have)
     await page.goto('/checkout');
-    await page.getByTestId('coupon-code').fill('SAVE10');
+    await page.getByTestId('couponLib-code').fill('SAVE10');
     await page.getByRole('button', { name: 'Apply' }).click();
 
     await expect(page.getByText('10% discount applied')).toBeVisible();

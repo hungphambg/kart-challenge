@@ -1,86 +1,117 @@
-# Shopping Cart
+# Kart Challenge API
 
-Build a mini food ordering web app featuring product listing and a functional shopping cart.\
-Prioritize correctness in functionality while getting it to look as close to the design as possible.
+This project implements a Go API for a shopping cart and order management system, built as part of the Kart Challenge. It features product listing, cart management, order placement, and coupon validation.
 
-For this task you will need to integrate to our demo e-commerce API for listing products and placing orders.
+## Table of Contents
 
-**API Reference**
-
-You can find our [API Documentation](https://orderfoodonline.deno.dev/public/openapi.html) here.
-
-API documentation is based on [OpenAPI3.1](https://swagger.io/specification/v3/) specification.
-You can also find spec file [here](https://orderfoodonline.deno.dev/public/openapi.yaml).
- 
-**Functional Requirements**
-
-- Display products with images
-- Add items to the cart and remove items
-- Show order total correctly
-- Increase or decrease item count in the cart
-- Show order confirmation after placing the order
-- Interactive hover and focus states for elements
-
-**Bonus Goals**
-
-- Allow users to enter a discount code (above the "Confirm Order" button)
-- Discount code `HAPPYHOURS` applies 18% discount to the order total
-- Discount code `BUYGETONE` gives the lowest priced item for free
-- Responsive design based on device's screen size
-
-**Are You a Full Stack Developer??**
-
-Impress us by implementing your own version of the API based on the OpenAPI specification.\
-Choose any language or framework of your choice. For example our top pick for backend is [Go](https://go.dev)
-
-> The API immplementation example available to you at orderfoodonline.deno.dev/api is simplified and doesn't handle some edge cases intentionally.
-> Use your best judgement to build a Robust API server.
-
-## Design
-
-You can find a [Figma](https://figma.com) design file `design.fig` that you can use.
-You might have to use your best judgement for some mobile layout designs and spacing.
-
-### Style Guide
-
-The designs were created to the following widths:
-
-- Mobile: 375px
-- Desktop: 1440px
-
-> 💡 These are just the design sizes. Ensure content is responsive and meets WCAG requirements by testing the full range of screen sizes from 320px to large screens.
-
-**Typography**
-
-- Font size (product names): 16px
-
-### Font
-
-- Family: [Red Hat Text](https://fonts.google.com/specimen/Red+Hat+Text)
-- Weights: 400, 600, 700
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Local Development with Docker Compose](#local-development-with-docker-compose)
+  - [Running Database Migrations](#running-database-migrations)
+  - [Building and Running without Docker](#building-and-running-without-docker)
+- [API Endpoints](#api-endpoints)
+- [API Documentation](#api-documentation)
+- [Project Structure](#project-structure)
+- [Testing](#testing)
 
 ## Getting Started
 
-Feel free to use any tool or workflow ou are comformtable with.\
-Here is an example workflow (you can use it as a reference or use your own workflow)
+Follow these instructions to set up, build, and run the application.
 
-1. Create a new public repository on [GitHub](https://github.com) (alternatively you can use GitLab, BitBucket or Git server of your choice).
-   If you are creating your repository on GitHub, you can chose to use this repository as a starting template. (Click on Use template button at the top)
-2. Look through the deisngs to plan your project. This will help you design UI libraries or tools.
-3. Create a [Vite](https://vite.dev) app to bootstrap a modern front-end project (alternatively use the framework of your choice).
-4. Structure your HTML and preview before theming and adding interactive functionality.
-5. Test and Iterate to build more features
-6. Deploy your app anywhere securely. You may use AWS, Vercel, Deno Deploy, Surge, CloudFlare Pages or some other web app deployment services.
-7. Additionally configure your repository to automatically publish your app on new commit push (CI).
+### Prerequisites
 
-> 💡 Replace or Modify this README to explain your solution and how to run and test it.
+Before you begin, ensure you have the following installed:
 
-_By following these guidelines, you should be able to build a functional and visually appealing mini e-commerce shopping portal that meets the minimum requirements and bonus goals. Good luck! 🚀_
+- **Go**: Version 1.22 or higher ([Download Go](https://go.dev/dl/))
+- **Docker & Docker Compose**: ([Install Docker Engine](https://docs.docker.com/engine/install/) and [Install Docker Compose](https://docs.docker.com/compose/install/))
 
-**Resources**
+### Local Development with Docker Compose
 
-- API documentation: https://orderfoodonline.deno.dev/public/openapi.html
-- API specification: https://orderfoodonline.deno.dev/public/openapi.yaml
-- Figma design file: [design.fig](./design.fig)
-- Red Hat Text font: https://fonts.google.com/specimen/Red+Hat+Text
+The easiest way to get the API and its MySQL database running locally is using Docker Compose.
 
+1.  **Build and Start Services:**
+    ```bash
+    docker-compose up --build
+    ```
+    This command will:
+    - Build the Go API Docker image using the `Dockerfile`.
+    - Start a MySQL database service.
+    - Start the Go API service, connected to the MySQL database.
+
+2.  **Access the API:**
+    The API will be accessible at `http://localhost:8080`.
+
+3.  **Stop Services:**
+    ```bash
+    docker-compose down
+    ```
+
+### Running Database Migrations
+
+The project uses GORM's `AutoMigrate` feature, which runs automatically when the API service starts. If you need to manually manage migrations or seed data, you would typically use a separate migration tool or script. For this project, simply starting the API will ensure the database schema is up-to-date.
+
+### Building and Running without Docker
+
+For Go development without Docker:
+
+1.  **Clone the repository:**
+    ```bash
+    git clone [your-repository-url]
+    cd kart-challenge
+    ```
+2.  **Download Dependencies:**
+    ```bash
+    go mod tidy
+    ```
+3.  **Build the application:**
+    ```bash
+    go build -o kart-api ./cmd/api
+    ```
+4.  **Run the application:**
+    You will need a running MySQL database. Configure its connection string via environment variables or a `.env` file.
+    Create a `.env` file in the project root:
+    ```
+    SERVER_PORT=8080
+    DATABASE_URL="user:password@tcp(127.0.0.1:3306)/database_name?parseTime=true"
+    ```
+    Then run:
+    ```bash
+    ./kart-api
+    ```
+
+### API Endpoints
+
+Here's a brief overview of the main API endpoints:
+
+-   `GET /`: Hello World endpoint.
+-   `GET /health`: Checks database connectivity (returns 200 OK if connected, 503 Service Unavailable otherwise).
+-   `GET /products`: Retrieve a list of all products.
+-   `GET /products/{id}`: Retrieve details of a specific product by ID.
+-   `GET /cart`: Retrieve user's current cart; creates one if it doesn't exist. Requires `DeviceID` header.
+-   `POST /cart/items`: Add or update an item in the cart. Requires `DeviceID` header and `product_id`, `quantity` in body.
+-   `PUT /cart/items/{product_id}`: Update quantity of a specific item in the cart. Requires `DeviceID` header and `quantity` in body.
+-   `DELETE /cart/items/{product_id}`: Remove a specific item from the cart. Requires `DeviceID` header.
+-   `DELETE /cart`: Clear all items from the user's cart. Requires `DeviceID` header.
+-   `POST /orders`: Place an order from the current cart. Requires `DeviceID` header.
+-   `GET /orders`: Retrieve a list of all past orders for a device. Requires `DeviceID` header.
+-   `GET /orders/{order_id}`: Retrieve details of a specific order by ID. Requires `DeviceID` header.
+-   `POST /coupons/validate`: Validate a coupon code and calculate potential discount. Requires `coupon_code` in body, `DeviceID` optional.
+
+### API Documentation
+
+The OpenAPI specification for this API is available at `api/openapi.yaml`. You can use tools like [Swagger UI](https://swagger.io/tools/swagger-ui/) or [Redoc](https://redoc.ly/redoc/) to view interactive documentation by serving this file.
+
+### Project Structure
+
+-   `cmd/api`: Main application entry point.
+-   `internal/config`: Configuration loading.
+-   `internal/database`: Database connection and GORM interactions.
+-   `internal/handler`: HTTP handlers for API endpoints.
+-   `internal/model`: Go structs for data models (Product, Cart, Order, Coupon, etc.).
+-   `migrations`: SQL migration scripts (not used directly with GORM AutoMigrate for schema creation, but can be used for initial data seeding if needed).
+-   `Dockerfile`: Docker build instructions for the API.
+-   `docker-compose.yaml`: Local development setup with API and MySQL.
+
+### Testing
+
+*(Instructions on how to run tests will be added here once tests are implemented.)*
