@@ -12,7 +12,7 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
-// CouponState tracks which topics a couponLib code has been seen in
+// CouponState tracks which topics a coupon code has been seen in
 type CouponState struct {
 	mu          sync.Mutex
 	couponMap   map[string]map[string]struct{} // couponCode -> {topic1, topic2, ...}
@@ -42,14 +42,14 @@ func (cs *CouponState) AddObservation(couponCode, topic string) {
 	cs.couponMap[couponCode][topic] = struct{}{}
 }
 
-// GetObservations returns the set of topics a couponLib code has been seen in
+// GetObservations returns the set of topics a coupon code has been seen in
 func (cs *CouponState) GetObservations(couponCode string) map[string]struct{} {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	return cs.couponMap[couponCode]
 }
 
-// GetCouponCodesByObservationCount returns couponLib codes observed in 'count' or more topics
+// GetCouponCodesByObservationCount returns coupon codes observed in 'count' or more topics
 func (cs *CouponState) GetCouponCodesByObservationCount(count int) []string {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -63,7 +63,7 @@ func (cs *CouponState) GetCouponCodesByObservationCount(count int) []string {
 	return validCodes
 }
 
-// SaveValidCouponsToRedis saves a list of couponLib codes to Redis as a Set
+// SaveValidCouponsToRedis saves a list of coupon codes to Redis as a Set
 // This operation is atomic using temporary keys and RENAME
 func (cs *CouponState) SaveValidCouponsToRedis(ctx context.Context, validCodes []string) error {
 	const (
@@ -82,7 +82,7 @@ func (cs *CouponState) SaveValidCouponsToRedis(ctx context.Context, validCodes [
 	if err != nil {
 		return fmt.Errorf("failed to save valid coupons to Redis: %w", err)
 	}
-	log.Printf("Saved %d valid couponLib codes to Redis key '%s'", len(validCodes), redisKeyCurrent)
+	log.Printf("Saved %d valid coupon codes to Redis key '%s'", len(validCodes), redisKeyCurrent)
 	return nil
 }
 
@@ -90,8 +90,8 @@ func main() {
 	fmt.Println("Coupon Consumer Service started.")
 
 	kafkaBrokers := []string{"kafka:9092"}
-	topics := []string{"couponbase1.gz", "couponbase2.gz", "couponbase3.gz"}
-	groupID := "couponLib-consumer-group"
+	topics := []string{"couponbase1", "couponbase2", "couponbase3"}
+	groupID := "coupon-consumer-group"
 	redisAddr := "redis:6379" // Redis address from docker-compose.pipeline.yaml
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
@@ -143,5 +143,5 @@ func main() {
 }
 
 func logf(msg string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
+	_, _ = fmt.Fprintf(os.Stderr, msg+"\n", args...)
 }

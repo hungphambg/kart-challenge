@@ -61,7 +61,7 @@ func main() {
 	cartHandler := &handler.CartHandler{DB: dbClient}
 	orderHandler := &handler.OrderHandler{DB: dbClient, Redis: redisClient}
 	couponHandler := &handler.CouponHandler{DB: dbClient, Redis: redisClient} // Pass Redis client to couponLib handler
-
+	//
 	// Routes
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
@@ -74,20 +74,20 @@ func main() {
 		return c.NoContent(http.StatusOK)
 	})
 
-	e.GET("/products", productHandler.GetProducts)
-	e.GET("/products/:id", productHandler.GetProduct)
+	e.GET("/api/products", productHandler.GetProducts)
+	e.GET("/api/products/:id", productHandler.GetProduct)
 
-	e.GET("/cart", cartHandler.GetCart)
-	e.POST("/cart/items", cartHandler.AddItemToCart)
+	e.GET("/api/cart", cartHandler.GetCart)
+	e.POST("/api/cart/items", cartHandler.AddItemToCart)
 	//e.PUT("/cart/items/:product_id", cartHandler.UpdateCartItem)
-	e.DELETE("/cart/items/:product_id", cartHandler.RemoveCartItem)
-	e.DELETE("/cart", cartHandler.ClearCart)
+	e.DELETE("/api/cart/items/:product_id", cartHandler.RemoveCartItem)
+	e.DELETE("/api/cart", cartHandler.ClearCart)
 
-	e.POST("/orders", orderHandler.PlaceOrder)
-	e.GET("/orders", orderHandler.GetOrders)
-	e.GET("/orders/:order_id", orderHandler.GetOrder)
+	e.POST("/api/orders", orderHandler.PlaceOrder)
+	e.GET("/api/orders", orderHandler.GetOrders)
+	e.GET("/api/orders/:order_id", orderHandler.GetOrder)
 
-	e.POST("/coupons/validate", couponHandler.ValidateCoupon) // Added couponLib validation endpoint
+	e.POST("/api/coupons/validate", couponHandler.ValidateCoupon) // Added couponLib validation endpoint
 
 	port := cfg.ServerPort
 	if port == "" {

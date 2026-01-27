@@ -75,9 +75,9 @@ services:
     container_name: scheduler
     volumes:
       - ./pipeline/run_producers.sh:/usr/local/bin/run_producers.sh
-      - ./couponbase1.gz:/app/producer/couponbase1.gz
-      - ./couponbase2.gz:/app/producer/couponbase2.gz
-      - ./couponbase3.gz:/app/producer/couponbase3.gz
+      - ./couponbase1.txt:/app/producer/couponbase1.txt
+      - ./couponbase2.txt:/app/producer/couponbase2.txt
+      - ./couponbase3.txt:/app/producer/couponbase3.txt
     entrypoint: ["/bin/sh", "-c"]
     command: ["while true; do /usr/local/bin/run_producers.sh; sleep 86400; done"] # Run daily
     depends_on:

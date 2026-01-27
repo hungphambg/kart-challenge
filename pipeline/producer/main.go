@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -25,9 +24,9 @@ func main() {
 
 	filePath := os.Args[1]
 	fileName := filepath.Base(filePath)
-	topic := strings.TrimSuffix(fileName, filepath.Ext(fileName)) // e.g., "couponbase1" from "couponbase1.gz"
+	topic := strings.TrimSuffix(fileName, filepath.Ext(fileName))
 
-	fmt.Printf("Attempting to open GZ file: %s\n", filePath)
+	fmt.Printf("Attempting to open file: %s\n", filePath)
 
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -36,35 +35,29 @@ func main() {
 	}
 	defer file.Close()
 
-	gzr, err := gzip.NewReader(file)
-	if err != nil {
-		fmt.Printf("Error creating gzip reader for %s: %v\n", filePath, err)
-		os.Exit(1)
-	}
-	defer gzr.Close()
-
 	couponRegex := regexp.MustCompile(`\b[a-zA-Z0-9]{8,10}\b`)
-
 	// Initialize Kafka producer
-	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers:      []string{"kafka:9092"}, // Kafka broker address from docker-compose.pipeline.yaml
+	writer := &kafka.Writer{
+		Addr:         kafka.TCP("kafka:9092"),
 		Topic:        topic,
 		Balancer:     &kafka.LeastBytes{},
 		Logger:       kafka.LoggerFunc(logf),
 		ErrorLogger:  kafka.LoggerFunc(logf),
-		Async:        true,        // Publish messages asynchronously
-		RequiredAcks: kafka.NoAck, // Fire and forget for maximum throughput
-	})
-	defer writer.Close()
+		Async:        true,
+		RequiredAcks: kafka.RequireNone,
+	}
+	defer func() {
+		_ = writer.Close()
+	}()
 
-	scanner := bufio.NewScanner(gzr)
+	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
 		matches := couponRegex.FindAllString(line, -1)
 
 		for _, match := range matches {
 			couponCode := strings.TrimSpace(match)
-			fmt.Printf("Identified couponLib code: %s, publishing to topic: %s\n", couponCode, topic)
+			fmt.Printf("Identified coupon code: %s, publishing to topic: %s\n", couponCode, topic)
 
 			msg := kafka.Message{
 				Key:   []byte(couponCode),
@@ -79,7 +72,7 @@ func main() {
 		}
 	}
 
-	if err := scanner.Err(); err != nil && err != io.EOF {
+	if err = scanner.Err(); err != nil && err != io.EOF {
 		fmt.Printf("Error reading decompressed content from %s: %v\n", filePath, err)
 		os.Exit(1)
 	}
