@@ -38,6 +38,21 @@ func (h *CartHandler) GetCart(c echo.Context) error {
 	return c.JSON(http.StatusOK, cart)
 }
 
+// CreateCart handles the POST /cart/create endpoint
+func (h *CartHandler) CreateCart(c echo.Context) error {
+	deviceID := c.Request().Header.Get("DeviceID")
+	if deviceID == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "DeviceID header is required")
+	}
+
+	cart, err := h.DB.CreateCart(deviceID)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, cart)
+}
+
 // AddItemToCart handles the POST /cart/items endpoint
 func (h *CartHandler) AddItemToCart(c echo.Context) error {
 	deviceID := c.Request().Header.Get("DeviceID")
@@ -46,6 +61,7 @@ func (h *CartHandler) AddItemToCart(c echo.Context) error {
 	}
 
 	var req struct {
+		ID        uint64 `json:"id" validate:"required,min=1"`
 		ProductID uint64 `json:"product_id"`
 		Quantity  uint32 `json:"quantity"`
 	}
@@ -54,7 +70,7 @@ func (h *CartHandler) AddItemToCart(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
 	}
 
-	cart, err := h.DB.GetCartByDeviceID(deviceID)
+	cart, err := h.DB.GetCartByID(req.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -94,12 +110,19 @@ func (h *CartHandler) AddItemToCart(c echo.Context) error {
 
 // ClearCart handles the DELETE /cart endpoint
 func (h *CartHandler) ClearCart(c echo.Context) error {
+	var req struct {
+		ID uint64 `json:"id" validate:"required,min=1"`
+	}
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
 	deviceID := c.Request().Header.Get("DeviceID")
 	if deviceID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "DeviceID header is required")
 	}
 
-	cart, err := h.DB.GetCartByDeviceID(deviceID)
+	cart, err := h.DB.GetCartByID(req.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -125,13 +148,16 @@ func (h *CartHandler) ClearCart(c echo.Context) error {
 	return c.JSON(http.StatusOK, emptyCart)
 }
 
-//	return c.JSON(http.StatusOK, updatedCart)
-//
-//}
-
 // RemoveCartItem handles the DELETE /cart/items/{product_id} endpoint
 
 func (h *CartHandler) RemoveCartItem(c echo.Context) error {
+	var req struct {
+		ID uint64 `json:"id" validate:"required,min=1"`
+	}
+
+	if err := c.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
 	deviceID := c.Request().Header.Get("DeviceID")
 	if deviceID == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "DeviceID header is required")
@@ -142,11 +168,10 @@ func (h *CartHandler) RemoveCartItem(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid product ID")
 	}
 
-	cart, err := h.DB.GetCartByDeviceID(deviceID)
+	cart, err := h.DB.GetCartByID(req.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-
 	if cart == nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Cart not found")
 	}

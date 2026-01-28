@@ -8,6 +8,10 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const (
+	CouponTableName = "coupon"
+)
+
 // Coupon represents a discount couponLib
 type Coupon struct {
 	ID          uint            `json:"id" gorm:"primaryKey"`
@@ -19,4 +23,8 @@ type Coupon struct {
 	IsActive    bool            `json:"is_active" gorm:"not null;default:true"`
 	CreatedAt   time.Time       `json:"created_at"`
 	UpdatedAt   time.Time       `json:"updated_at"`
+}
+
+func (Coupon) TableName() string {
+	return CouponTableName
 }

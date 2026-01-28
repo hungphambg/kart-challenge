@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"kart-challenge/internal/meta"
 	"kart-challenge/internal/model"
 
 	"github.com/shopspring/decimal"
@@ -81,7 +82,28 @@ func (client *DBClient) GetProductByID(id uint64) (*model.Product, error) {
 // GetCartByDeviceID retrieves a cart and its items by device ID
 func (client *DBClient) GetCartByDeviceID(deviceID string) (*model.Cart, error) {
 	var cart model.Cart
-	err := client.DB.Where("device_id = ?", deviceID).Preload("Items").First(&cart).Error
+	err := client.DB.
+		Where("device_id = ?", deviceID).
+		Preload("Items").
+		First(&cart).
+		Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // No cart found
+		}
+		return nil, fmt.Errorf("error querying cart: %w", err)
+	}
+	return &cart, nil
+}
+
+// GetCartByID get cart by id
+func (client *DBClient) GetCartByID(ID uint64) (*model.Cart, error) {
+	var cart model.Cart
+	err := client.DB.
+		Where(&model.Cart{ID: ID}).
+		Preload("Items").
+		First(&cart).
+		Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil // No cart found
@@ -95,6 +117,7 @@ func (client *DBClient) GetCartByDeviceID(deviceID string) (*model.Cart, error) 
 func (client *DBClient) CreateCart(deviceID string) (*model.Cart, error) {
 	cart := model.Cart{
 		DeviceID:  deviceID,
+		Status:    meta.CartStatusActive,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		Items:     []model.CartItem{},
@@ -182,16 +205,16 @@ func (client *DBClient) ClearCart(cartID uint64) error {
 	return nil
 }
 
-// GetValidCouponByCode retrieves a couponLib by its code and checks its validity
+// GetValidCouponByCode retrieves a coupon by its code and checks its validity
 func (client *DBClient) GetValidCouponByCode(code string) (*model.Coupon, error) {
 	var coupon model.Coupon
 	now := time.Now()
 	err := client.DB.Where("code = ? AND is_active = ? AND (expires_at IS NULL OR expires_at > ?)", code, true, now).First(&coupon).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // No valid couponLib found
+			return nil, nil // No valid coupon found
 		}
-		return nil, fmt.Errorf("error querying couponLib: %w", err)
+		return nil, fmt.Errorf("error querying coupon: %w", err)
 	}
 	return &coupon, nil
 }
@@ -244,11 +267,10 @@ func (client *DBClient) CreateOrder(cartID uint64, deviceID string) (*model.Orde
 	now := time.Now()
 	order := model.Order{
 		DeviceID:    deviceID,
-		Status:      "pending", // Initial status
+		Status:      meta.OrderStatusPending,
 		TotalAmount: totalAmount,
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		Items:       orderItems,
 	}
 
 	err = tx.Create(&order).Error
@@ -256,6 +278,7 @@ func (client *DBClient) CreateOrder(cartID uint64, deviceID string) (*model.Orde
 		return nil, fmt.Errorf("failed to create order: %w", err)
 	}
 
+	order.Items = orderItems
 	// GORM should automatically save orderItems due to hasMany relationship, but let's be explicit
 	for i := range order.Items {
 		order.Items[i].OrderID = order.ID
@@ -274,16 +297,26 @@ func (client *DBClient) CreateOrder(cartID uint64, deviceID string) (*model.Orde
 		}
 	}
 
-	// 6. Clear the cart
-	err = tx.Where("cart_id = ?", cartID).Delete(&model.CartItem{}).Error
+	err = tx.Model(&model.Cart{}).
+		Where(&model.Cart{
+			ID: cartID,
+		}).
+		Update(model.CartColNameStatus, meta.CartStatusDone).
+		Error
 	if err != nil {
-		return nil, fmt.Errorf("failed to clear cart items: %w", err)
+		return nil, fmt.Errorf("failed to save cart item: %w", err)
 	}
 
-	err = tx.Where("id = ?", cartID).Delete(&model.Cart{}).Error
-	if err != nil {
-		return nil, fmt.Errorf("failed to delete cart: %w", err)
-	}
+	//// 6. Clear the cart
+	//err = tx.Where("cart_id = ?", cartID).Delete(&model.CartItem{}).Error
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to clear cart items: %w", err)
+	//}
+	//
+	//err = tx.Where("id = ?", cartID).Delete(&model.Cart{}).Error
+	//if err != nil {
+	//	return nil, fmt.Errorf("failed to delete cart: %w", err)
+	//}
 
 	tx.Commit()
 	if tx.Error != nil {

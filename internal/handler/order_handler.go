@@ -25,31 +25,32 @@ func (h *OrderHandler) PlaceOrder(c echo.Context) error {
 	}
 
 	var req struct {
-		CouponCode string `json:"coupon_code"` // Will be ignored for now as per plan
+		CouponCode string `json:"coupon_code"`
+		CartID     uint64 `json:"cart_id" validate:"required,min=1"`
 	}
 
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
 	}
 
-	// Placeholder for couponLib code validation
+	// Placeholder for coupon code validation
 	if req.CouponCode != "" {
-		// Check Redis for couponLib validity
+		// Check Redis for coupon validity
 		redisKey := "valid_coupon_codes"
 		isMember, err := h.Redis.SIsMember(c.Request().Context(), redisKey, req.CouponCode).Result()
 		if err != nil {
-			log.Printf("Error checking Redis for couponLib code %s: %v", req.CouponCode, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate couponLib")
+			log.Printf("Error checking Redis for coupon code %s: %v", req.CouponCode, err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate coupon")
 		}
 
 		if !isMember {
-			return echo.NewHTTPError(http.StatusBadRequest, "Invalid or expired couponLib code")
+			return echo.NewHTTPError(http.StatusBadRequest, "Invalid or expired coupon code")
 		}
-		// If valid in Redis, retrieve couponLib details from the database to apply discount logic (not implemented yet for orders)
-		// For now, just proceed with order if couponLib is valid in Redis.
+		// If valid in Redis, retrieve coupon details from the database to apply discount logic (not implemented yet for orders)
+		// For now, just proceed with order if coupon is valid in Redis.
 	}
 
-	cart, err := h.DB.GetCartByDeviceID(deviceID)
+	cart, err := h.DB.GetCartByID(req.CartID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

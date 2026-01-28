@@ -10,7 +10,6 @@ import (
 	"kart-challenge/internal/config"
 	"kart-challenge/internal/database"
 	"kart-challenge/internal/handler"
-	"kart-challenge/internal/model" // Import model package
 
 	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
@@ -44,12 +43,6 @@ func main() {
 	}
 	fmt.Println("Successfully connected to Redis!")
 
-	// AutoMigrate models
-	err = dbClient.DB.AutoMigrate(&model.Product{}, &model.Cart{}, &model.CartItem{}, &model.Order{}, &model.OrderItem{}, &model.Coupon{})
-	if err != nil {
-		log.Fatalf("failed to auto migrate database models: %v", err)
-	}
-
 	e := echo.New()
 
 	// Middleware
@@ -74,10 +67,11 @@ func main() {
 		return c.NoContent(http.StatusOK)
 	})
 
-	e.GET("/api/products", productHandler.GetProducts)
-	e.GET("/api/products/:id", productHandler.GetProduct)
+	e.GET("/api/product", productHandler.GetProducts)
+	e.GET("/api/product/:id", productHandler.GetProduct)
 
 	e.GET("/api/cart", cartHandler.GetCart)
+	e.POST("/api/cart/create", cartHandler.CreateCart)
 	e.POST("/api/cart/items", cartHandler.AddItemToCart)
 	//e.PUT("/cart/items/:product_id", cartHandler.UpdateCartItem)
 	e.DELETE("/api/cart/items/:product_id", cartHandler.RemoveCartItem)
