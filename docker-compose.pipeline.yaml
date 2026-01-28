@@ -21,40 +21,38 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:9093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_CREATE_TOPICS: "couponbase1.gz:1:1,couponbase2.gz:1:1,couponbase3.gz:1:1" # topic:partitions:replicas
+      KAFKA_CREATE_TOPICS: "couponbase1:1:1,couponbase2:1:1,couponbase3:1:1" # topic:partitions:replicas
     volumes:
       - kafka_data:/var/lib/kafka/data
     depends_on:
       - zookeeper
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "kafka:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7.0.0-alpine
-    hostname: redis
-    container_name: redis
+    restart: always
     ports:
-      - "6379:6379"
+      - "6380:6379"
+    command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
-  producer:
-    build:
-      context: .
-      dockerfile: pipeline/producer/Dockerfile
-    container_name: producer
-    environment:
-      KAFKA_BROKERS: kafka:9092
-    volumes:
-      - ./couponbase1.gz:/app/producer/couponbase1.gz
-      - ./couponbase2.gz:/app/producer/couponbase2.gz
-      - ./couponbase3.gz:/app/producer/couponbase3.gz
-    depends_on:
-      - kafka
 
   consumer:
     build:
@@ -65,8 +63,10 @@ services:
       KAFKA_BROKERS: kafka:9092
       REDIS_ADDR: redis:6379
     depends_on:
-      - kafka
-      - redis
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   scheduler:
     build:
@@ -75,13 +75,14 @@ services:
     container_name: scheduler
     volumes:
       - ./pipeline/run_producers.sh:/usr/local/bin/run_producers.sh
-      - ./couponbase1.txt:/app/producer/couponbase1.txt
-      - ./couponbase2.txt:/app/producer/couponbase2.txt
-      - ./couponbase3.txt:/app/producer/couponbase3.txt
+      - ./pipeline/couponbase1:/app/producer/couponbase1
+      - ./pipeline/couponbase2:/app/producer/couponbase2
+      - ./pipeline/couponbase3:/app/producer/couponbase3
     entrypoint: ["/bin/sh", "-c"]
     command: ["while true; do /usr/local/bin/run_producers.sh; sleep 86400; done"] # Run daily
     depends_on:
-      - producer # Ensure producer service is available before scheduling
+      kafka:
+        condition: service_healthy # Ensure kafka service is available before scheduling
 
 volumes:
   kafka_data:

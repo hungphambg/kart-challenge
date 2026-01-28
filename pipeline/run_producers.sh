@@ -5,7 +5,7 @@
 # Assuming this script is run inside a container that has access to the producer binary and the .gz files
 
 for i in 1 2 3; do
-  FILE="/app/producer/couponbase${i}.gz" # Path inside the container
+  FILE="/app/producer/couponbase${i}" # Path inside the container
   echo "Running producer for $FILE..."
   /app/producer/main $FILE # Execute the producer binary directly
   echo "Finished producer for $FILE."
