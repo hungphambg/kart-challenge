@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  consumer:
+    build:
+      context: .
+      dockerfile: pipeline/consumer/Dockerfile
+    container_name: consumer
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      REDIS_ADDR: redis:6379
+
+

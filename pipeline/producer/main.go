@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
@@ -24,18 +23,9 @@ func main() {
 
 	filePath := os.Args[1]
 	fileName := filepath.Base(filePath)
+	fmt.Println("process file: ", filePath)
 	topic := strings.TrimSuffix(fileName, filepath.Ext(fileName))
 
-	fmt.Printf("Attempting to open file: %s\n", filePath)
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		fmt.Printf("Error opening file %s: %v\n", filePath, err)
-		os.Exit(1)
-	}
-	defer file.Close()
-
-	couponRegex := regexp.MustCompile(`\b[a-zA-Z0-9]{8,10}\b`)
 	// Initialize Kafka producer
 	writer := &kafka.Writer{
 		Addr:         kafka.TCP("kafka:9092"),
@@ -50,34 +40,53 @@ func main() {
 		_ = writer.Close()
 	}()
 
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			fmt.Printf("Ticker ticked, processing file: %s\n", filePath)
+			processFileAndSend(filePath, writer, topic)
+		}
+	}
+}
+
+func processFileAndSend(filePath string, writer *kafka.Writer, topic string) {
+	fmt.Printf("Attempting to open file: %s\n", filePath)
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		fmt.Printf("Error opening file %s: %v\n", filePath, err)
+		return
+	}
+	defer file.Close()
+
+	//couponRegex := regexp.MustCompile(`\b[a-zA-Z0-9]{8,10}\b`)
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		matches := couponRegex.FindAllString(line, -1)
+		//matches := couponRegex.FindAllString(line, -1)
+		couponCode := strings.TrimSpace(line)
+		fmt.Printf("Identified coupon code: %s, publishing to topic: %s\n", couponCode, topic)
 
-		for _, match := range matches {
-			couponCode := strings.TrimSpace(match)
-			fmt.Printf("Identified coupon code: %s, publishing to topic: %s\n", couponCode, topic)
+		msg := kafka.Message{
+			Key:   []byte(couponCode),
+			Value: []byte(couponCode),
+			Time:  time.Now(),
+		}
 
-			msg := kafka.Message{
-				Key:   []byte(couponCode),
-				Value: []byte(couponCode),
-				Time:  time.Now(),
-			}
-
-			err = writer.WriteMessages(context.Background(), msg)
-			if err != nil {
-				fmt.Printf("Failed to write message to Kafka: %v\n", err)
-			}
+		err = writer.WriteMessages(context.Background(), msg)
+		if err != nil {
+			fmt.Printf("Failed to write message to Kafka: %v\n", err)
 		}
 	}
 
 	if err = scanner.Err(); err != nil && err != io.EOF {
-		fmt.Printf("Error reading decompressed content from %s: %v\n", filePath, err)
-		os.Exit(1)
+		fmt.Printf("Error reading content from %s: %v\n", filePath, err)
 	}
 
-	fmt.Printf("Successfully processed GZ file: %s\n", filePath)
+	fmt.Printf("Successfully processed file: %s\n", filePath)
 }
 
 func logf(msg string, args ...interface{}) {

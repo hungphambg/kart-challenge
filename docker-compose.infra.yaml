@@ -53,37 +53,6 @@ services:
       timeout: 3s
       retries: 10
 
-
-  consumer:
-    build:
-      context: .
-      dockerfile: pipeline/consumer/Dockerfile
-    container_name: consumer
-    environment:
-      KAFKA_BROKERS: kafka:9092
-      REDIS_ADDR: redis:6379
-    depends_on:
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  scheduler:
-    build:
-      context: .
-      dockerfile: pipeline/producer/Dockerfile # Use producer's Dockerfile for consistent environment
-    container_name: scheduler
-    volumes:
-      - ./pipeline/run_producers.sh:/usr/local/bin/run_producers.sh
-      - ./pipeline/couponbase1:/app/producer/couponbase1
-      - ./pipeline/couponbase2:/app/producer/couponbase2
-      - ./pipeline/couponbase3:/app/producer/couponbase3
-    entrypoint: ["/bin/sh", "-c"]
-    command: ["while true; do /usr/local/bin/run_producers.sh; sleep 86400; done"] # Run daily
-    depends_on:
-      kafka:
-        condition: service_healthy # Ensure kafka service is available before scheduling
-
 volumes:
   kafka_data:
   redis_data:

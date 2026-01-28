@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  producer-1:
+    build:
+      context: .
+      dockerfile: pipeline/producer/Dockerfile
+    container_name: producer-1
+    volumes:
+      - ./pipeline/couponbase1:/app/producer/couponbase1
+#    command: ["/app/producer/couponbase1"]
+
+#
+#  producer-2:
+#    build:
+#      context: .
+#      dockerfile: pipeline/producer/Dockerfile
+#    container_name: producer-2
+#    volumes:
+#      - ./pipeline/couponbase2:/app/producer/couponbase2
+#    command: ["/app/producer/couponbase2"]
+#
+#
+#  producer-3:
+#    build:
+#      context: .
+#      dockerfile: pipeline/producer/Dockerfile
+#    container_name: producer-3
+#    volumes:
+#      - ./pipeline/couponbase3:/app/producer/couponbase3
+#    command: ["/app/producer/couponbase3"]
