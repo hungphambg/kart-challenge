@@ -8,9 +8,8 @@ services:
     container_name: producer-1
     volumes:
       - ./pipeline/couponbase1:/app/producer/couponbase1
-#    command: ["/app/producer/couponbase1"]
+    command: ["/app/producer/couponbase1", "1"]
 
-#
 #  producer-2:
 #    build:
 #      context: .
