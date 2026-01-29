@@ -20,20 +20,19 @@ const BatchSize = 10000
 func main() {
 	fmt.Println("Coupon Producer Service started.")
 	if len(os.Args) < 3 {
-		fmt.Println("Usage: producer <path_to_gz_file>")
+		fmt.Println("Usage: producer <path_to_file>")
 		os.Exit(1)
 	}
 
 	filePath := os.Args[1]
 	fileIdx, err1 := strconv.Atoi(os.Args[1])
 	if err1 != nil {
-		fmt.Printf("Error converting first argument: %v\n", err1)
+		fmt.Printf("Error converting file index: %v\n", err1)
 		return
 	}
 	fmt.Println("process file: ", filePath)
 
 	state := NewCouponState("redis:6379")
-
 	start := time.Now()
 	processFileAndSend(filePath, fileIdx, nil, state)
 	fmt.Println("Coupon Producer Service Done after ", time.Since(start))

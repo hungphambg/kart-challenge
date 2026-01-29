@@ -1,5 +1,0 @@
-version: '3.8'
-
-include:
-  - docker-compose.infra.yaml
-  - docker-compose.services-consumer.yaml

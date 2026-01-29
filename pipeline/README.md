@@ -21,10 +21,10 @@ This README provides instructions for setting up and interacting with the local 
 
 ## Starting the Pipeline Infrastructure
 
-To start Kafka, Zookeeper, and Redis services:
+To start Mysql Database and Redis services:
 
 ```bash
-docker-compose -f docker-compose.pipeline.yaml up -d
+docker-compose -f docker-compose.infra.yaml up -d
 ```
 The `-d` flag runs the services in detached mode (in the background).
 
@@ -33,57 +33,101 @@ The `-d` flag runs the services in detached mode (in the background).
 To stop and remove the services:
 
 ```bash
-docker-compose -f docker-compose.pipeline.yaml down
+docker-compose -f docker-compose.infra.yaml down
 ```
 
-## Kafka Operations
+## Start coupon producer to reading files  set coupon to redis
+Make sure that 3 files stored in ./pipeline folder
+```bash
+docker-compose -f docker-compose.services-producer.yaml up -d
+```
 
-The Kafka broker is accessible on `localhost:9093`.
-
-### List Topics
-
-To list all Kafka topics:
+## Start api service for make order
 
 ```bash
-docker-compose -f docker-compose.pipeline.yaml exec kafka kafka-topics --bootstrap-server kafka:9092 --list
-```
-(Note: `kafka:9092` is the internal Docker network address for the Kafka broker)
-
-### View Topic Messages
-
-To view messages in a specific topic (e.g., `couponbase1.gz`):
-
-```bash
-docker-compose -f docker-compose.pipeline.yaml exec kafka kafka-console-consumer --bootstrap-server kafka:9092 --topic couponbase1.gz --from-beginning
-```
-Press `Ctrl+C` to exit the consumer.
-
-## Redis Operations
-
-The Redis service is accessible on `localhost:6379`.
-
-### Connect to Redis CLI
-
-To connect to the Redis command-line interface:
-
-```bash
-docker-compose -f docker-compose.pipeline.yaml exec redis redis-cli
+docker-compose -f docker-compose.services-producer.yaml up -d
 ```
 
-### Check Redis Keys
+[//]: # ()
+[//]: # (## Kafka Operations)
 
-Once connected to the Redis CLI, you can use commands like:
+[//]: # ()
+[//]: # (The Kafka broker is accessible on `localhost:9093`.)
 
-- `KEYS *`: List all keys.
-- `GET <key_name>`: Get the value of a specific key.
-- `HGETALL <hash_key>`: Get all fields and values in a hash.
+[//]: # ()
+[//]: # (### List Topics)
 
-## Accessing Service Logs
+[//]: # ()
+[//]: # (To list all Kafka topics:)
 
-To view the logs of a specific service (e.g., `kafka`):
+[//]: # ()
+[//]: # (```bash)
 
-```bash
-docker-compose -f docker-compose.pipeline.yaml logs -f kafka
-```
-Replace `kafka` with `zookeeper` or `redis` to view their respective logs.
-Press `Ctrl+C` to stop tailing the logs.
+[//]: # (docker-compose -f docker-compose.pipeline.yaml exec kafka kafka-topics --bootstrap-server kafka:9092 --list)
+
+[//]: # (```)
+
+[//]: # (&#40;Note: `kafka:9092` is the internal Docker network address for the Kafka broker&#41;)
+
+[//]: # ()
+[//]: # (### View Topic Messages)
+
+[//]: # ()
+[//]: # (To view messages in a specific topic &#40;e.g., `couponbase1.gz`&#41;:)
+
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (docker-compose -f docker-compose.pipeline.yaml exec kafka kafka-console-consumer --bootstrap-server kafka:9092 --topic couponbase1.gz --from-beginning)
+
+[//]: # (```)
+
+[//]: # (Press `Ctrl+C` to exit the consumer.)
+
+[//]: # (## Redis Operations)
+
+[//]: # ()
+[//]: # (The Redis service is accessible on `localhost:6379`.)
+
+[//]: # ()
+[//]: # (### Connect to Redis CLI)
+
+[//]: # ()
+[//]: # (To connect to the Redis command-line interface:)
+
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (docker-compose -f docker-compose.pipeline.yaml exec redis redis-cli)
+
+[//]: # (```)
+
+[//]: # ()
+[//]: # (### Check Redis Keys)
+
+[//]: # ()
+[//]: # (Once connected to the Redis CLI, you can use commands like:)
+
+[//]: # ()
+[//]: # (- `KEYS *`: List all keys.)
+
+[//]: # (- `GET <key_name>`: Get the value of a specific key.)
+
+[//]: # (- `HGETALL <hash_key>`: Get all fields and values in a hash.)
+
+[//]: # ()
+[//]: # (## Accessing Service Logs)
+
+[//]: # ()
+[//]: # (To view the logs of a specific service &#40;e.g., `kafka`&#41;:)
+
+[//]: # ()
+[//]: # (```bash)
+
+[//]: # (docker-compose -f docker-compose.pipeline.yaml logs -f kafka)
+
+[//]: # (```)
+
+[//]: # (Replace `kafka` with `zookeeper` or `redis` to view their respective logs.)
+
+[//]: # (Press `Ctrl+C` to stop tailing the logs.)

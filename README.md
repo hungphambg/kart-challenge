@@ -6,9 +6,7 @@ This project implements a Go API for a shopping cart and order management system
 
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
-  - [Local Development with Docker Compose](#local-development-with-docker-compose)
   - [Running Database Migrations](#running-database-migrations)
-  - [Building and Running without Docker](#building-and-running-without-docker)
 - [API Endpoints](#api-endpoints)
 - [API Documentation](#api-documentation)
 - [Project Structure](#project-structure)
@@ -22,62 +20,41 @@ Follow these instructions to set up, build, and run the application.
 
 Before you begin, ensure you have the following installed:
 
-- **Go**: Version 1.22 or higher ([Download Go](https://go.dev/dl/))
+- **Go**: Version 1.25 or higher ([Download Go](https://go.dev/dl/))
 - **Docker & Docker Compose**: ([Install Docker Engine](https://docs.docker.com/engine/install/) and [Install Docker Compose](https://docs.docker.com/compose/install/))
 
-### Local Development with Docker Compose
+## Starting the Infrastructure
 
-The easiest way to get the API and its MySQL database running locally is using Docker Compose.
+To start Mysql Database and Redis services:
 
-1.  **Build and Start Services:**
-    ```bash
-    docker-compose up --build
-    ```
-    This command will:
-    - Build the Go API Docker image using the `Dockerfile`.
-    - Start a MySQL database service.
-    - Start the Go API service, connected to the MySQL database.
+```bash
+docker-compose -f docker-compose.infra.yaml up -d
+```
+The `-d` flag runs the services in detached mode (in the background).
 
-2.  **Access the API:**
-    The API will be accessible at `http://localhost:8080`.
+## Stopping the Infrastructure
 
-3.  **Stop Services:**
-    ```bash
-    docker-compose down
-    ```
+To stop and remove the services:
+
+```bash
+docker-compose -f docker-compose.infra.yaml down
+```
+
+## Start coupon producer to reading files set coupon to redis
+Make sure that 3 files stored in ./pipeline folder
+```bash
+docker-compose -f docker-compose.services-producer.yaml up -d
+```
+
+## Start api service for make order
+```bash
+docker-compose -f docker-compose.services-producer.yaml up -d
+```
+
 
 ### Running Database Migrations
 
-The project uses GORM's `AutoMigrate` feature, which runs automatically when the API service starts. If you need to manually manage migrations or seed data, you would typically use a separate migration tool or script. For this project, simply starting the API will ensure the database schema is up-to-date.
-
-### Building and Running without Docker
-
-For Go development without Docker:
-
-1.  **Clone the repository:**
-    ```bash
-    git clone [your-repository-url]
-    cd kart-challenge
-    ```
-2.  **Download Dependencies:**
-    ```bash
-    go mod tidy
-    ```
-3.  **Build the application:**
-    ```bash
-    go build -o kart-api ./cmd/api
-    ```
-4.  **Run the application:**
-    You will need a running MySQL database. Configure its connection string via environment variables or a `.env` file.
-    Create a `.env` file in the project root:
-    ```
-    SERVER_PORT=8080
-    DATABASE_URL="user:password@tcp(127.0.0.1:3306)/database_name?parseTime=true"
-    ```
-    Then run:
-    ```bash
-    ./kart-api
-    ```
+Running mysql script in ./migrations
 
 ### API Endpoints
 
@@ -108,9 +85,9 @@ The OpenAPI specification for this API is available at `api/openapi.yaml`. You c
 -   `internal/database`: Database connection and GORM interactions.
 -   `internal/handler`: HTTP handlers for API endpoints.
 -   `internal/model`: Go structs for data models (Product, Cart, Order, Coupon, etc.).
--   `migrations`: SQL migration scripts (not used directly with GORM AutoMigrate for schema creation, but can be used for initial data seeding if needed).
+-   `migrations`: SQL migration scripts.
 -   `Dockerfile`: Docker build instructions for the API.
--   `docker-compose.yaml`: Local development setup with API and MySQL.
+-   `docker-compose.*.yaml`: Local development setup with API and MySQL, redis.
 
 ### Testing
 
