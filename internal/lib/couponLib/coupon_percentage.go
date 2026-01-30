@@ -31,3 +31,7 @@ func (h *PercentageCoupon) CalculateDiscount(cart model.Cart) CouponResult {
 		Message:        fmt.Sprintf("%s applied! %v off your cart total.", h.Code, h.percentage),
 	}
 }
+
+func (h *PercentageCoupon) GetInfo() string {
+	return fmt.Sprintf("coupon code: %s ! %v percentage off your cart total.", h.Code, h.percentage)
+}

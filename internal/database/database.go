@@ -205,14 +205,33 @@ func (client *DBClient) ClearCart(cartID uint64) error {
 	return nil
 }
 
+//// GetValidCouponByCode retrieves a coupon by its code and checks its validity
+//func (client *DBClient) GetValidCouponByCode(code string) (*model.Coupon, error) {
+//	var coupon model.Coupon
+//	now := time.Now()
+//	err := client.DB.Where("code = ? AND is_active = ? AND (expires_at IS NULL OR expires_at > ?)", code, true, now).First(&coupon).Error
+//	if err != nil {
+//		if errors.Is(err, gorm.ErrRecordNotFound) {
+//			return nil, nil // No valid coupon found
+//		}
+//		return nil, fmt.Errorf("error querying coupon: %w", err)
+//	}
+//	return &coupon, nil
+//}
+
 // GetValidCouponByCode retrieves a coupon by its code and checks its validity
-func (client *DBClient) GetValidCouponByCode(code string) (*model.Coupon, error) {
-	var coupon model.Coupon
-	now := time.Now()
-	err := client.DB.Where("code = ? AND is_active = ? AND (expires_at IS NULL OR expires_at > ?)", code, true, now).First(&coupon).Error
+func (client *DBClient) GetCouponByCode(code string) (*model.Coupon, error) {
+	var coupon = model.Coupon{
+		Code: code,
+	}
+	err := client.DB.
+		Model(&coupon).
+		Where(&coupon).
+		First(&coupon).
+		Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil // No valid coupon found
+			return nil, nil
 		}
 		return nil, fmt.Errorf("error querying coupon: %w", err)
 	}

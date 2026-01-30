@@ -11,8 +11,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	kafka "github.com/segmentio/kafka-go"
 )
 
 const BatchSize = 10000
@@ -25,16 +23,20 @@ func main() {
 	}
 
 	filePath := os.Args[1]
-	fileIdx, err1 := strconv.Atoi(os.Args[1])
-	if err1 != nil {
-		fmt.Printf("Error converting file index: %v\n", err1)
+	fileIdx, err := strconv.Atoi(os.Args[2])
+	if err != nil {
+		fmt.Printf("Error converting file index: %v\n", err)
 		return
 	}
-	fmt.Println("process file: ", filePath)
+	fmt.Printf("process file: %s, file index %d\n", filePath, fileIdx)
 
-	state := NewCouponState("redis:6379")
-	start := time.Now()
-	processFileAndSend(filePath, fileIdx, nil, state)
+	var (
+		ctx    = context.Background()
+		writer = NewCouponRedisWriter("redis:6379", fileIdx)
+		start  = time.Now()
+	)
+
+	processFileAndSend(ctx, filePath, writer)
 	fmt.Println("Coupon Producer Service Done after ", time.Since(start))
 
 	//ticker := time.NewTicker(5 * time.Minute)
@@ -51,16 +53,18 @@ func main() {
 	//	}
 	//}
 }
-func processFileAndSend(filePath string, fileIdx int, writer *kafka.Writer, couponState *CouponState) {
+
+func processFileAndSend(ctx context.Context, filePath string, writer CouponWriter) {
 	startTime := time.Now()
+
 	file, err := os.Open(filePath)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
-	reader := bufio.NewReaderSize(file, 1024*1024) // 1MB
-	jobs := make(chan []string, 100)               // backpressure
+	reader := bufio.NewReaderSize(file, 1024*1024) // 1M
 
+	jobs := make(chan []string, 1000) // backpressure
 	go readBatches(reader, jobs)
 
 	workers := 10
@@ -68,7 +72,7 @@ func processFileAndSend(filePath string, fileIdx int, writer *kafka.Writer, coup
 
 	wg.Add(workers)
 	for i := 0; i < workers; i++ {
-		go worker(jobs, writer, &wg, couponState, fileIdx)
+		go worker(ctx, jobs, &wg, writer)
 	}
 
 	wg.Wait()
@@ -107,33 +111,15 @@ func readBatches(reader *bufio.Reader, out chan<- []string) {
 	}
 }
 
-func worker(jobs <-chan []string, writer *kafka.Writer, wg *sync.WaitGroup,
-	couponState *CouponState, fileIdx int) {
+func worker(ctx context.Context, jobs <-chan []string, wg *sync.WaitGroup, write CouponWriter) {
 	defer wg.Done()
 	for batch := range jobs {
-		processBatch(couponState, writer, batch, fileIdx) // DB / Kafka / validate
+		processBatch(ctx, write, batch) // DB / Kafka / validate
 	}
 }
 
-func processBatch(couponState *CouponState, writer *kafka.Writer, batch []string, fileIdx int) {
-	if couponState != nil {
-		couponState.AddObservation(batch, fileIdx)
-	}
-	if writer != nil {
-		msgs := make([]kafka.Message, 0, len(batch))
-		for _, code := range batch {
-			msg := kafka.Message{
-				Key:   []byte(code),
-				Value: []byte(code),
-				Time:  time.Now(),
-			}
-			msgs = append(msgs, msg)
-		}
-		err := writer.WriteMessages(context.Background(), msgs...)
-		if err != nil {
-			fmt.Printf("Failed to write message to Kafka: %v\n", err)
-		}
-	}
+func processBatch(ctx context.Context, write CouponWriter, batch []string) {
+	write.Write(ctx, batch)
 }
 
 func logf(msg string, args ...interface{}) {

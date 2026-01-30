@@ -44,3 +44,7 @@ func (h *FreeItemCoupon) CalculateDiscount(cart model.Cart) CouponResult {
 
 	return result
 }
+
+func (h *FreeItemCoupon) GetInfo() string {
+	return fmt.Sprintf("One item of lowest price is free.")
+}

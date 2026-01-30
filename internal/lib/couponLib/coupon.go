@@ -16,12 +16,13 @@ type CouponData struct {
 type Coupon interface {
 	Init(data CouponData)
 	CalculateDiscount(cart model.Cart) CouponResult
+	GetInfo() string
 }
 
 type CouponResult struct {
-	DiscountAmount decimal.Decimal
-	DiscountType   string
-	Message        string
+	DiscountAmount decimal.Decimal `json:"discount_amount"`
+	DiscountType   string          `json:"discount_type"`
+	Message        string          `json:"message"`
 }
 
 // just for allow unknow couponLib
@@ -38,4 +39,8 @@ func (h *DefaultCoupon) CalculateDiscount(_ model.Cart) CouponResult {
 		DiscountType: "unknown",
 		Message:      fmt.Sprintf("%s applied!", h.Code),
 	}
+}
+
+func (h *DefaultCoupon) GetInfo() string {
+	return fmt.Sprintf("%s infomation!", h.Code)
 }

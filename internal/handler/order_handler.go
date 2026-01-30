@@ -1,14 +1,16 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 
 	"kart-challenge/internal/database"
+	"kart-challenge/internal/lib/couponLib"
+	"kart-challenge/internal/meta"
 
 	redis "github.com/go-redis/redis/v8"
 	"github.com/labstack/echo/v4"
+	"github.com/shopspring/decimal"
 )
 
 // OrderHandler handles order related requests
@@ -33,21 +35,35 @@ func (h *OrderHandler) PlaceOrder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
 	}
 
+	var coupon couponLib.Coupon
 	// Placeholder for coupon code validation
 	if req.CouponCode != "" {
-		// Check Redis for coupon validity
-		redisKey := "valid_coupon_codes"
-		isMember, err := h.Redis.SIsMember(c.Request().Context(), redisKey, req.CouponCode).Result()
+		_, key := getRedisKeyByCouponCode(req.CouponCode)
+		cnt, err := h.Redis.BitCount(c.Request().Context(), key, &redis.BitCount{}).Result()
 		if err != nil {
-			log.Printf("Error checking Redis for coupon code %s: %v", req.CouponCode, err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to validate coupon")
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-
-		if !isMember {
+		if cnt < 2 {
 			return echo.NewHTTPError(http.StatusBadRequest, "Invalid or expired coupon code")
 		}
-		// If valid in Redis, retrieve coupon details from the database to apply discount logic (not implemented yet for orders)
-		// For now, just proceed with order if coupon is valid in Redis.
+		couponDb, err := h.DB.GetCouponByCode(req.CouponCode)
+		if err != nil {
+			return err
+		}
+		var (
+			couponData = couponLib.CouponData{
+				Code:  req.CouponCode,
+				Value: decimal.Zero,
+			}
+
+			couponType = meta.CouponTypeUnknown
+		)
+		if couponDb != nil {
+			couponType = couponDb.Type
+			couponData.Value = couponDb.Value
+		}
+
+		coupon = couponLib.CreateCoupon(couponType, couponData)
 	}
 
 	cart, err := h.DB.GetCartByID(req.CartID)
@@ -68,7 +84,15 @@ func (h *OrderHandler) PlaceOrder(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, order)
+	couponResult := couponLib.CouponResult{}
+	if coupon != nil {
+		couponResult = coupon.CalculateDiscount(*cart)
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"order":         order,
+		"coupon_result": couponResult,
+	})
 }
 
 // GetOrders handles the GET /orders endpoint
